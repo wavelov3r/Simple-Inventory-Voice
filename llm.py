@@ -69,6 +69,7 @@ MESSAGES = {
         "update_failed": "Aggiornamento non riuscito: {error}",
         "item_missing_after_update_action": "L'elemento non risulta presente dopo l'aggiornamento.",
         "item_updated": "'{name}' aggiornato.",
+        "expiry_alert_not_verified": "I giorni di avviso scadenza non sono stati verificati: l'inventario riporta {days}.",
         "expiry_current": "L'elemento '{name}' ha attualmente scadenza {expiry}. Quale deve essere la nuova scadenza?",
         "expiry_missing": "L'elemento '{name}' non ha una scadenza impostata. Quale scadenza vuoi impostare?",
     },
@@ -109,6 +110,7 @@ MESSAGES = {
         "update_failed": "Update failed: {error}",
         "item_missing_after_update_action": "The item is not present after the update.",
         "item_updated": "'{name}' was updated.",
+        "expiry_alert_not_verified": "Expiry alert days could not be verified: the inventory reports {days}.",
         "expiry_current": "'{name}' currently expires on {expiry}. What should the new expiration date be?",
         "expiry_missing": "'{name}' has no expiration date set. What expiration date would you like to set?",
     },
@@ -1657,6 +1659,12 @@ Instead:
 If the user explicitly provides the new expiration date in the same request,
 you may update it immediately.
 
+EXPIRY ALERT RULE:
+Use expiry_alert_days when the user asks to be alerted a number of days before
+an item expires. This value is the number of days before expiry, and does not
+change expiry_date. For example, "avvisami 4 giorni prima che scade" or
+"alert me 4 days before it expires" requires expiry_alert_days=4.
+
 Do not invent values.
 """
 
@@ -1895,12 +1903,26 @@ Do not invent values.
             }
 
         updated_name = str(service_data["name"])
-        if _find_inventory_item(updated_items, updated_name) is None:
+        updated_item = _find_inventory_item(updated_items, updated_name)
+        if updated_item is None:
             return {
                 "success": False,
                 "action": "update_failed",
                 "message": _message(hass, "item_missing_after_update_action"),
             }
+
+        if "expiry_alert_days" in service_data:
+            actual_alert_days = updated_item.get("expiry_alert_days")
+            if actual_alert_days != service_data["expiry_alert_days"]:
+                return {
+                    "success": False,
+                    "action": "update_failed",
+                    "message": _message(
+                        hass,
+                        "expiry_alert_not_verified",
+                        days=actual_alert_days,
+                    ),
+                }
 
         return {
             "success": True,
@@ -1975,6 +1997,12 @@ The user may provide these values in any order and across multiple turns.
 For updates, first identify the existing item. Never silently change an
 expiration date when the user has not specified the new date. In that case,
 tell the user the current expiration date and ask for the new one.
+
+When the user asks for an expiry reminder or alert a number of days before an
+item expires, call inventory_update_item with expiry_alert_days set to that
+number. Examples: "avvisami 4 giorni prima che scade" and "alert me 4 days
+before it expires" both require expiry_alert_days=4. Do not say that expiry
+alerts are unsupported.
 
 When searching inventory, actually call inventory_find_items rather than
 assuming what the user owns.
