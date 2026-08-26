@@ -21,7 +21,9 @@ Both Simple Inventory Voice and its Simple Inventory dependency are Home Assista
 3. Create an inventory item in the Simple Inventory Home Assistant integration with one or more categories.
 4. In Home Assistant, open **Settings > Devices & services > Add integration** and add **Simple Inventory Voice**.
 5. Enter the Simple Inventory database ID. Optionally configure category aliases and location aliases, select the response language, and choose which item fields are required.
-6. Open Assist with an LLM-based conversation agent and start populating or querying the database.
+6. Expose the Simple Inventory entities for the selected database to Assist.
+7. In the conversation agent settings, allow the LLM-based conversation agent to control Assist.
+8. Open Assist with that conversation agent and start populating or querying the database.
 
 ## Settings
 
