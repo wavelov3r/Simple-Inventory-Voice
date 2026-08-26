@@ -1,0 +1,11 @@
+{
+  "domain": "inventory_voice",
+  "name": "Simple Inventory Voice",
+  "version": "1.0",
+  "documentation": "https://www.home-assistant.io/",
+  "requirements": [],
+  "codeowners": [],
+  "config_flow": true,
+  "integration_type": "service",
+  "icon": "mdi:package-variant-closed"
+}
