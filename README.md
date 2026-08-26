@@ -1,6 +1,13 @@
 # Simple Inventory Voice
 
-Simple Inventory Voice adds LLM tools to Home Assistant Assist for managing a [Simple Inventory](https://github.com/blaineventurine/simple_inventory) database using natural language. It can add, update, restock, consume, delete, search, and inspect inventory items, including prices, expiration alerts, barcodes, shopping-list settings, and consumption analytics.
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-41BDF5?logo=home-assistant&logoColor=white)](https://www.home-assistant.io/)
+![Custom integration](https://img.shields.io/badge/Home%20Assistant-Custom%20integration-41BDF5)
+![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?logo=python&logoColor=white)
+![Language](https://img.shields.io/badge/Responses-Italian%20%7C%20English-009688)
+
+Simple Inventory Voice is a Home Assistant custom integration that adds LLM tools to Home Assistant Assist. It manages a [Simple Inventory](https://github.com/blaineventurine/simple_inventory) database through natural language. It can add, update, restock, consume, delete, search, and inspect inventory items, including prices, expiration alerts, barcodes, shopping-list settings, and consumption analytics.
+
+Both Simple Inventory Voice and its Simple Inventory dependency are Home Assistant custom integrations.
 
 ## Installation
 
@@ -10,8 +17,8 @@ Simple Inventory Voice adds LLM tools to Home Assistant Assist for managing a [S
    config/custom_components/simple_inventory_voice
    ```
 
-2. Install [Simple Inventory](https://github.com/blaineventurine/simple_inventory) and restart Home Assistant.
-3. Create an inventory item in Simple Inventory with one or more categories.
+2. Install [Simple Inventory](https://github.com/blaineventurine/simple_inventory), the Home Assistant inventory custom integration, and restart Home Assistant.
+3. Create an inventory item in the Simple Inventory Home Assistant integration with one or more categories.
 4. In Home Assistant, open **Settings > Devices & services > Add integration** and add **Simple Inventory Voice**.
 5. Enter the Simple Inventory database ID. Optionally configure category aliases and location aliases, select the response language, and choose which item fields are required.
 6. Open Assist with an LLM-based conversation agent and start populating or querying the database.
