@@ -2,9 +2,10 @@
   "domain": "simple_inventory_voice",
   "name": "Simple Inventory Voice",
   "version": "1.2",
-  "documentation": "https://www.home-assistant.io/",
+  "documentation": "https://github.com/wavelov3r/Simple-Inventory-Voice#readme",
+  "issue_tracker": "https://github.com/wavelov3r/Simple-Inventory-Voice/issues",
   "requirements": [],
-  "codeowners": [],
+  "codeowners": ["@wavelov3r"],
   "config_flow": true,
   "integration_type": "service",
   "icon": "mdi:package-variant-closed"
