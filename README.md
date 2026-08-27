@@ -58,15 +58,14 @@ Both repositories must be installed as custom integrations. Install the main Sim
 ## Initial setup
 
 1. Create or select an inventory in Simple Inventory.
-2. Find its inventory ID. It is available in Developer Tools in the `inventory_id` attribute of the corresponding `sensor.<database>_inventory` entity.
-3. Add Simple Inventory Voice and enter that inventory ID.
-4. Expose the Simple Inventory entities for the selected database to Assist.
-5. In the conversation agent settings, allow the LLM-based agent to control Assist.
-6. Open Assist using that conversation agent and make a request.
+2. Add Simple Inventory Voice and select the corresponding inventory sensor by its entity name.
+3. Expose the Simple Inventory entities for the selected database to Assist.
+4. In the conversation agent settings, allow the LLM-based agent to control Assist.
+5. Open Assist using that conversation agent and make a request.
 
 ## Options
 
-- **Inventory ID**: The Simple Inventory database used by default.
+- **Inventory entity**: The Simple Inventory sensor used as the default database. The integration reads its internal inventory ID automatically.
 - **Response language**: `ita` for Italian or `eng` for English responses.
 - **Categories**: Canonical category names and optional aliases, one per line.
 - **Locations**: Canonical location names and optional aliases, one per line.
@@ -88,7 +87,7 @@ When options are opened, the integration reads the categories and locations alre
 
 ## Assistant behavior and decisions
 
-- The configured inventory ID is used automatically. Barcode lookups and requests about all inventories are handled separately.
+- The selected inventory entity is used automatically. Barcode lookups and requests about all inventories are handled separately.
 - A location such as `pantry` is an item location, never the inventory name.
 - For additions, the assistant collects every enabled required field before calling the add tool. It does not invent missing values.
 - If an item already exists, its stored category and location are preserved when adding more information. Use an update request to change them.

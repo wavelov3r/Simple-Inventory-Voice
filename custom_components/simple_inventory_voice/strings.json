@@ -5,7 +5,7 @@
         "title": "Simple Inventory Voice",
         "description": "Configura l'assistente vocale per Simple Inventory.",
         "data": {
-          "inventory_id": "ID inventario",
+          "inventory_entity": "Entità inventario",
           "language": "Lingua delle risposte LLM",
           "categories": "Categorie",
           "locations": "Posizioni",
@@ -17,7 +17,7 @@
           "allow_new_categories_locations": "Permetti di creare nuove categorie e posizioni a voce"
         },
         "data_description": {
-          "inventory_id": "ID dell'inventario Simple Inventory, ad esempio database_oggetti.",
+          "inventory_entity": "Sensore dell'inventario Simple Inventory da usare come inventario predefinito.",
           "categories": "Una categoria per riga nel formato: nome: alias1, alias2",
           "locations": "Una posizione per riga nel formato: nome: alias1, alias2"
         }
@@ -30,7 +30,7 @@
         "title": "Impostazioni Simple Inventory Voice",
         "description": "Configura categorie, posizioni, alias e campi obbligatori.",
         "data": {
-          "inventory_id": "ID inventario",
+          "inventory_entity": "Entità inventario",
           "language": "Lingua delle risposte LLM",
           "categories": "Categorie",
           "locations": "Posizioni",
@@ -42,7 +42,7 @@
           "allow_new_categories_locations": "Permetti di creare nuove categorie e posizioni a voce"
         },
         "data_description": {
-          "inventory_id": "ID dell'inventario Simple Inventory, ad esempio database_oggetti.",
+          "inventory_entity": "Sensore dell'inventario Simple Inventory da usare come inventario predefinito.",
           "categories": "Una categoria per riga. Esempio: cibo: alimenti, mangiare",
           "locations": "Una posizione per riga. Esempio: pensile cucina: pensile, mobile cucina"
         }

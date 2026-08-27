@@ -10,7 +10,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from . import DOMAIN
+from . import DOMAIN, inventory_id_from_entity
 
 
 INVENTORY_DOMAIN = "simple_inventory"
@@ -178,8 +178,8 @@ class InventoryVoiceConfigFlow(
             return self.async_create_entry(
                 title="Simple Inventory Voice",
                 data={
-                    "inventory_id": user_input[
-                        "inventory_id"
+                    "inventory_entity": user_input[
+                        "inventory_entity"
                     ],
                 },
                 options={
@@ -227,10 +227,11 @@ class InventoryVoiceConfigFlow(
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        "inventory_id"
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type="text"
+                        "inventory_entity"
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            domain="sensor",
+                            integration=INVENTORY_DOMAIN,
                         )
                     ),
                     vol.Optional(
@@ -306,9 +307,10 @@ class InventoryVoiceOptionsFlow(
     ) -> list[dict[str, Any]] | None:
         """Fetch current Simple Inventory items for this config entry."""
 
-        inventory_id = self.config_entry.data.get(
-            "inventory_id"
-        )
+        inventory_id = inventory_id_from_entity(
+            self.hass,
+            self.config_entry.data.get("inventory_entity"),
+        ) or self.config_entry.data.get("inventory_id")
         if not inventory_id:
             return None
 
@@ -350,10 +352,12 @@ class InventoryVoiceOptionsFlow(
         """Manage the options."""
 
         if user_input is not None:
-            # Keep inventory_id in data as authoritative source
+            # Keep the selected entity in data as the authoritative source.
             new_data = dict(self.config_entry.data)
-            if "inventory_id" in user_input:
-                new_data["inventory_id"] = user_input.pop("inventory_id")
+            if "inventory_entity" in user_input:
+                new_data["inventory_entity"] = user_input.pop(
+                    "inventory_entity"
+                )
                 self.hass.config_entries.async_update_entry(
                     self.config_entry,
                     data=new_data,
@@ -402,13 +406,14 @@ class InventoryVoiceOptionsFlow(
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        "inventory_id",
+                        "inventory_entity",
                         default=self.config_entry.data.get(
-                            "inventory_id", ""
+                            "inventory_entity", ""
                         ),
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type="text"
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            domain="sensor",
+                            integration=INVENTORY_DOMAIN,
                         )
                     ),
                     vol.Optional(
