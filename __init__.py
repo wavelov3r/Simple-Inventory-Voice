@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 
-DOMAIN = "inventory_voice"
+DOMAIN = "simple_inventory_voice"
 
 
 async def async_setup(

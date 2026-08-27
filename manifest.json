@@ -1,5 +1,5 @@
 {
-  "domain": "inventory_voice",
+  "domain": "simple_inventory_voice",
   "name": "Simple Inventory Voice",
   "version": "1.2",
   "documentation": "https://www.home-assistant.io/",
