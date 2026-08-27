@@ -40,7 +40,6 @@ Both repositories must be installed as custom integrations. Install the main Sim
 5. Repeat the same steps for `https://github.com/wavelov3r/Simple-Inventory-Voice`.
 6. Install **Simple Inventory Voice**, restart Home Assistant, and add it from **Settings > Devices & services > Add integration**.
 
-After installing the repository, HACS may initially show a commit hash. Create and publish a GitHub release tagged `v1.2` from the `main` branch, then use **Update information** in HACS. A release is required for HACS to display `1.2` instead of a commit hash.
 
 ### Option 2: Manual installation
 
@@ -56,20 +55,6 @@ After installing the repository, HACS may initially show a commit hash. Create a
 
 The GitHub repository must keep this structure:
 
-```text
-Simple-Inventory-Voice/
-  custom_components/
-    simple_inventory_voice/
-      __init__.py
-      config_flow.py
-      llm.py
-      manifest.json
-      strings.json
-      brand/
-        icon.png
-  hacs.json
-  README.md
-```
 
 ## Initial setup
 
@@ -126,7 +111,3 @@ When options are opened, the integration reads the categories and locations alre
 - "What is expiring soon?"
 - "Remove one bottle of water and two cans of beans."
 - "Find the item with barcode 123456789."
-
-## Release
-
-The current integration version is `1.2`. For HACS, publish a non-draft GitHub release with the tag `v1.2`. Future releases should update the version in `custom_components/simple_inventory_voice/manifest.json` and use a matching Git tag.
