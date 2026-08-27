@@ -53,8 +53,6 @@ Both repositories must be installed as custom integrations. Install the main Sim
 3. Restart Home Assistant again.
 4. Add **Simple Inventory Voice** from **Settings > Devices & services > Add integration**.
 
-The GitHub repository must keep this structure:
-
 
 ## Initial setup
 
