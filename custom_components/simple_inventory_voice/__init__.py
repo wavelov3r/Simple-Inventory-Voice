@@ -7,6 +7,24 @@ from homeassistant.core import HomeAssistant
 
 
 DOMAIN = "simple_inventory_voice"
+INVENTORY_DOMAIN = "simple_inventory"
+
+
+def inventory_id_from_entity(
+    hass: HomeAssistant,
+    entity_id: str | None,
+) -> str | None:
+    """Return the Simple Inventory ID exposed by an inventory entity."""
+
+    if not entity_id:
+        return None
+
+    state = hass.states.get(entity_id)
+    if state is None:
+        return None
+
+    inventory_id = state.attributes.get("inventory_id")
+    return inventory_id if isinstance(inventory_id, str) else None
 
 
 async def async_setup(

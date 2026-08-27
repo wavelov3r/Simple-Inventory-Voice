@@ -14,7 +14,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.llm import LLMContext, ToolInput
 from homeassistant.util.json import JsonObjectType
 
-from . import DOMAIN
+from . import DOMAIN, inventory_id_from_entity
 
 
 INVENTORY_DOMAIN = "simple_inventory"
@@ -456,7 +456,10 @@ def _inventory_id_from_context(
 
     entry = _loaded_entry(hass)
     if entry is not None:
-        return entry.data.get("inventory_id")
+        return inventory_id_from_entity(
+            hass,
+            entry.data.get("inventory_entity"),
+        ) or entry.data.get("inventory_id")
 
     return None
 
