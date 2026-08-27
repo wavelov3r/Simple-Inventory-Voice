@@ -14,7 +14,8 @@ Simple Inventory Voice is an add-on, not a standalone inventory system. The main
 ## Features
 
 - Add items with quantity, unit, category, location, expiration date, price, barcode, aliases, and shopping-list settings.
-- Set an exact quantity, increase a quantity for restocking, or decrease it when an item is consumed.
+- Set an exact quantity, increase a quantity for restocking, or decrease it when an item is consumed. Consuming an item, even down to zero, never deletes it or its history.
+- Permanently delete an item from the database on explicit request only, with a required confirmation step before anything is removed.
 - Update item details, including expiration dates and expiration-alert days.
 - Search one inventory or inspect all configured inventories.
 - Look up or scan barcodes when supported by the underlying Simple Inventory integration.
@@ -96,6 +97,8 @@ When options are opened, the integration reads the categories and locations alre
 - An expiration date is never changed implicitly. If a new date was not provided, the assistant reports the current date and asks for the new one.
 - Expiration reminders use the requested number of days through the item update operation.
 - Restocking increases quantity; consuming decreases quantity; setting quantity replaces it with the exact value. Negative quantities are rejected.
+- Consuming an item never deletes it: reaching a quantity of zero is a normal, expected result, and the item together with its history stays in the database.
+- Deleting an item from the database is only ever triggered by an explicit request such as "delete it from the database" or "elimina dal database", never by running out of stock. The assistant first asks for confirmation and only deletes the item, permanently including its history, after the user explicitly confirms.
 - Every write operation is checked by reading the inventory again. The assistant reports success only when the requested result is verified.
 - If one request contains multiple items or actions, each one is processed separately and its result is reported individually.
 - Search and statistics requests always read the inventory rather than relying on previous conversation context.
@@ -109,3 +112,4 @@ When options are opened, the integration reads the categories and locations alre
 - "What is expiring soon?"
 - "Remove one bottle of water and two cans of beans."
 - "Find the item with barcode 123456789."
+- "Delete the eggs from the database." (asks for confirmation before deleting)
