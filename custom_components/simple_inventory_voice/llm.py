@@ -57,6 +57,7 @@ MESSAGES = {
         "delete_failed": "Eliminazione non riuscita: {error}",
         "item_still_present": "L'elemento risulta ancora presente nell'inventario.",
         "item_deleted": "'{name}' eliminato dall'inventario.",
+        "delete_confirmation_required": "Vuoi eliminare definitivamente '{name}' dal database, inclusa la sua cronologia? Questa azione non può essere annullata. Rispondi confermando esplicitamente, ad esempio 'sì, elimina dal database', per procedere.",
         "barcode_lookup_failed": "Ricerca del codice a barre non riuscita: {error}",
         "barcode_not_found": "Nessun elemento trovato per il codice '{barcode}'.",
         "positive_quantity": "La quantità deve essere positiva.",
@@ -101,6 +102,7 @@ MESSAGES = {
         "delete_failed": "Could not delete the item: {error}",
         "item_still_present": "The item is still present in the inventory.",
         "item_deleted": "'{name}' was deleted from the inventory.",
+        "delete_confirmation_required": "Do you want to permanently delete '{name}' from the database, including its history? This cannot be undone. Reply with an explicit confirmation, e.g. 'yes, delete from the database', to proceed.",
         "barcode_lookup_failed": "Barcode lookup failed: {error}",
         "barcode_not_found": "No item was found for barcode '{barcode}'.",
         "positive_quantity": "The quantity must be positive.",
@@ -1146,12 +1148,17 @@ class InventoryRemoveQuantityTool(llm.Tool):
     name = "inventory_remove_quantity"
 
     description = """
-Remove a quantity from an existing inventory item.
+Remove a quantity from an existing inventory item, e.g. when the user says
+they consumed, used, ate, drank, or finished some amount ("ho consumato",
+"ho finito", "ho usato").
 
 Use the configured inventory automatically. The location is optional and is
 only used to distinguish items with the same name in different locations.
-Do not remove more than the current quantity. Never report success unless
-the resulting quantity is verified in inventory.
+Do not remove more than the current quantity. It is normal and expected for
+the resulting quantity to reach 0 (item fully consumed): this tool never
+deletes the item or its history, it only sets the quantity to 0. Do not use
+inventory_delete_item for this case. Never report success unless the
+resulting quantity is verified in inventory.
 """
 
     parameters = vol.Schema(
@@ -1277,14 +1284,32 @@ class InventoryDeleteItemTool(llm.Tool):
     name = "inventory_delete_item"
 
     description = """
-Permanently remove an item from the configured Simple Inventory.
+Permanently remove an item, including its history, from the configured
+Simple Inventory database.
 
-Use only when the user explicitly asks to delete or remove the whole item,
-not merely to consume a quantity. Never report success unless the item is no
-longer present after the service call.
+Only use this when the user explicitly asks to delete/erase the item from
+the database (e.g. "elimina dal database", "cancella dal database", "delete
+it from the database"). Running out of stock, consuming the last unit, or
+the quantity reaching zero is NEVER a reason to call this tool: use
+inventory_remove_quantity for that instead, which keeps the item (with its
+history) at quantity 0.
+
+Confirmation flow: call this tool without confirm=true first. It responds
+with action="confirmation_required" and a confirmation message instead of
+deleting anything. Read that message to the user and only call this tool
+again with confirm=true after the user explicitly confirms. Never pass
+confirm=true on the first call.
+
+Never report success unless the item is no longer present after the service
+call.
 """
 
-    parameters = vol.Schema({vol.Required("name"): str})
+    parameters = vol.Schema(
+        {
+            vol.Required("name"): str,
+            vol.Optional("confirm", default=False): bool,
+        }
+    )
 
     async def async_call(
         self,
@@ -1300,7 +1325,9 @@ longer present after the service call.
                 _message(hass, "no_inventory")
             )
 
-        item_name = tool_input.tool_args["name"]
+        args = tool_input.tool_args
+        item_name = args["name"]
+        confirm = bool(args.get("confirm", False))
         try:
             items = await _get_inventory_items(hass, inventory_id, llm_context)
         except Exception as err:
@@ -1315,6 +1342,18 @@ longer present after the service call.
             return _build_not_found_response(hass, items, item_name)
 
         stored_name = str(item.get("name", item_name))
+
+        if not confirm:
+            return {
+                "success": False,
+                "action": "confirmation_required",
+                "confirmation_required": True,
+                "item": stored_name,
+                "message": _message(
+                    hass, "delete_confirmation_required", name=stored_name
+                ),
+            }
+
         try:
             await hass.services.async_call(
                 INVENTORY_DOMAIN,
@@ -2105,6 +2144,21 @@ Use inventory_get_consumption_rates for consumption or spending questions.
 The configured inventory ID is used automatically except for barcode lookups
 and requests explicitly about all inventories. A location such as "dispensa"
 is an item location, never the inventory name.
+
+When the user says they consumed, used, finished, or ran out of something
+("ho consumato", "ho finito", "è finito"), always use
+inventory_remove_quantity (or inventory_set_quantity to set it to 0). It is
+normal for the quantity to reach 0; never call inventory_delete_item in this
+case, since that would permanently erase the item and its whole history.
+
+Only call inventory_delete_item when the user explicitly asks to delete or
+erase the item from the database (e.g. "elimina dal database", "cancella dal
+database", "elimina [l'oggetto] dal database"), never just because it ran
+out. inventory_delete_item requires two steps: call it once to get a
+confirmation message, read that message to the user, and only call it again
+with confirm=true after the user has explicitly confirmed the deletion.
+Never set confirm=true on the first call or without an explicit user
+confirmation.
 
 Never invent inventory information.
 
