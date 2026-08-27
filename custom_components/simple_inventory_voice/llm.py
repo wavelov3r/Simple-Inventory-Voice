@@ -504,15 +504,36 @@ async def _get_inventory_items(
     return _extract_items(response)
 
 
+def _normalize_lookup_value(
+    value: str | None,
+    alias_map: dict[str, str] | None = None,
+) -> str:
+    """Normalize a lookup value using configured aliases when available."""
+
+    if value is None:
+        return ""
+
+    normalized = str(value).strip()
+    if not normalized:
+        return ""
+
+    normalized_lower = normalized.lower()
+    if alias_map is not None:
+        normalized = alias_map.get(normalized_lower, normalized)
+
+    return str(normalized).strip().lower()
+
+
 def _find_inventory_item(
     items: list[dict[str, Any]],
     name: str,
     location: str | None = None,
+    location_aliases: dict[str, str] | None = None,
 ) -> dict[str, Any] | None:
     """Find an item by name or alias and, when supplied, location."""
 
     name_lower = name.strip().lower()
-    location_lower = location.strip().lower() if location else None
+    location_lower = _normalize_lookup_value(location, location_aliases)
 
     for item in items:
         item_names = [str(item.get("name", "")).strip().lower()]
@@ -528,9 +549,10 @@ def _find_inventory_item(
 
         if name_lower not in item_names:
             continue
-        if location_lower and str(
-            item.get("location", "")
-        ).strip().lower() != location_lower:
+        if location_lower and _normalize_lookup_value(
+            item.get("location", ""),
+            location_aliases,
+        ) != location_lower:
             continue
         return item
 
@@ -1004,11 +1026,15 @@ Never report success unless the resulting quantity is verified in inventory.
             llm_context,
         )
         location = args.get("location")
+        location_aliases = None
         if isinstance(location, str) and location.strip():
             options = _entry_options(hass)
+            location_aliases = _parse_alias_config(
+                str(options.get("locations", ""))
+            )
             normalized_location, location_error = _normalize_mapped_value(
                 location,
-                _parse_alias_config(str(options.get("locations", ""))),
+                location_aliases,
                 _collect_existing_values(items, "location"),
                 "location",
                 hass,
@@ -1022,6 +1048,7 @@ Never report success unless the resulting quantity is verified in inventory.
             items,
             args["name"],
             location,
+            location_aliases,
         )
         if item is None:
             return _build_not_found_response(
@@ -1100,10 +1127,34 @@ report success unless the resulting quantity is verified in inventory.
             }
 
         items = await _get_inventory_items(hass, inventory_id, llm_context)
-        item = _find_inventory_item(items, args["name"], args.get("location"))
+        location = args.get("location")
+        location_aliases = None
+        if isinstance(location, str) and location.strip():
+            options = _entry_options(hass)
+            location_aliases = _parse_alias_config(
+                str(options.get("locations", ""))
+            )
+            normalized_location, location_error = _normalize_mapped_value(
+                location,
+                location_aliases,
+                _collect_existing_values(items, "location"),
+                "location",
+                hass,
+                _allow_new_categories_locations(options),
+            )
+            if location_error is not None:
+                return location_error
+            location = normalized_location
+
+        item = _find_inventory_item(
+            items,
+            args["name"],
+            location,
+            location_aliases,
+        )
         if item is None:
             return _build_not_found_response(
-                hass, items, args["name"], args.get("location")
+                hass, items, args["name"], location
             )
 
         try:
@@ -1205,11 +1256,15 @@ resulting quantity is verified in inventory.
             llm_context,
         )
         location = args.get("location")
+        location_aliases = None
         if isinstance(location, str) and location.strip():
             options = _entry_options(hass)
+            location_aliases = _parse_alias_config(
+                str(options.get("locations", ""))
+            )
             normalized_location, location_error = _normalize_mapped_value(
                 location,
-                _parse_alias_config(str(options.get("locations", ""))),
+                location_aliases,
                 _collect_existing_values(items, "location"),
                 "location",
                 hass,
@@ -1223,6 +1278,7 @@ resulting quantity is verified in inventory.
             items,
             args["name"],
             location,
+            location_aliases,
         )
         if item is None:
             return _build_not_found_response(
