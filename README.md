@@ -16,7 +16,7 @@ Il repository GitHub deve contenere questa struttura, con la cartella dell'integ
 ```text
 simple-inventory-voice/
   custom_components/
-    inventory_voice/
+    simple_inventory_voice/
       __init__.py
       config_flow.py
       llm.py
@@ -30,7 +30,7 @@ simple-inventory-voice/
 Prima della pubblicazione:
 
 1. Crea un repository pubblico su GitHub, ad esempio `simple-inventory-voice`.
-2. Copia il contenuto di questa cartella locale in `custom_components/inventory_voice/`.
+2. Carica l'intero contenuto di questa cartella locale nel repository, mantenendo la directory `custom_components/simple_inventory_voice/`.
 3. Mantieni `manifest.json` con la versione `1.2` e crea una release GitHub con il tag `v1.2`.
 4. Verifica che `manifest.json`, `strings.json` e la cartella `brand/` siano inclusi nel commit.
 
@@ -49,7 +49,7 @@ Per una pubblicazione HACS definitiva, aggiungi il repository alla validazione H
 1. Copy this folder to:
 
    ```text
-   config/custom_components/simple_inventory_voice
+  config/custom_components/simple_inventory_voice
    ```
 
 2. Install [Simple Inventory](https://github.com/blaineventurine/simple_inventory), the Home Assistant inventory custom integration, and restart Home Assistant.
