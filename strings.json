@@ -13,7 +13,8 @@
           "require_unit": "Unità obbligatoria",
           "require_category": "Categoria obbligatoria",
           "require_location": "Posizione obbligatoria",
-          "require_expiry": "Scadenza obbligatoria"
+          "require_expiry": "Scadenza obbligatoria",
+          "allow_new_categories_locations": "Permetti di creare nuove categorie e posizioni a voce"
         },
         "data_description": {
           "inventory_id": "ID dell'inventario Simple Inventory, ad esempio database_oggetti.",
@@ -37,7 +38,8 @@
           "require_unit": "Unità obbligatoria",
           "require_category": "Categoria obbligatoria",
           "require_location": "Posizione obbligatoria",
-          "require_expiry": "Scadenza obbligatoria"
+          "require_expiry": "Scadenza obbligatoria",
+          "allow_new_categories_locations": "Permetti di creare nuove categorie e posizioni a voce"
         },
         "data_description": {
           "inventory_id": "ID dell'inventario Simple Inventory, ad esempio database_oggetti.",

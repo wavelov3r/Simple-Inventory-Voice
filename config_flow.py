@@ -215,6 +215,10 @@ class InventoryVoiceConfigFlow(
                         "require_expiry",
                         True,
                     ),
+                    "allow_new_categories_locations": user_input.get(
+                        "allow_new_categories_locations",
+                        False,
+                    ),
                 },
             )
 
@@ -273,6 +277,10 @@ class InventoryVoiceConfigFlow(
                     vol.Optional(
                         "require_expiry",
                         default=True,
+                    ): selector.BooleanSelector(),
+                    vol.Optional(
+                        "allow_new_categories_locations",
+                        default=False,
                     ): selector.BooleanSelector(),
                 }
             ),
@@ -464,6 +472,13 @@ class InventoryVoiceOptionsFlow(
                         default=options.get(
                             "require_expiry",
                             True,
+                        ),
+                    ): selector.BooleanSelector(),
+                    vol.Optional(
+                        "allow_new_categories_locations",
+                        default=options.get(
+                            "allow_new_categories_locations",
+                            False,
                         ),
                     ): selector.BooleanSelector(),
                 }

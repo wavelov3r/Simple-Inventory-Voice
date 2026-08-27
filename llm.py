@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import difflib
 from typing import Any
 
 import voluptuous as vol
@@ -72,6 +73,9 @@ MESSAGES = {
         "expiry_alert_not_verified": "I giorni di avviso scadenza non sono stati verificati: l'inventario riporta {days}.",
         "expiry_current": "L'elemento '{name}' ha attualmente scadenza {expiry}. Quale deve essere la nuova scadenza?",
         "expiry_missing": "L'elemento '{name}' non ha una scadenza impostata. Quale scadenza vuoi impostare?",
+        "similar_item_found": "Non trovo '{name}' nell'inventario. Ti riferisci a '{candidate}'?",
+        "similar_items_found": "Non trovo '{name}' nell'inventario. Forse intendi uno di questi: {candidates}?",
+        "item_found_other_location": "Non trovo '{name}' in questa posizione. Forse intendi '{candidate}' in '{location}'?",
     },
     "eng": {
         "no_inventory": "No Simple Inventory inventory is configured.",
@@ -113,6 +117,9 @@ MESSAGES = {
         "expiry_alert_not_verified": "Expiry alert days could not be verified: the inventory reports {days}.",
         "expiry_current": "'{name}' currently expires on {expiry}. What should the new expiration date be?",
         "expiry_missing": "'{name}' has no expiration date set. What expiration date would you like to set?",
+        "similar_item_found": "I cannot find '{name}' in the inventory. Did you mean '{candidate}'?",
+        "similar_items_found": "I cannot find '{name}' in the inventory. Did you mean one of these: {candidates}?",
+        "item_found_other_location": "I cannot find '{name}' in that location. Did you mean '{candidate}' in '{location}'?",
     },
 }
 
@@ -270,6 +277,7 @@ def _normalize_mapped_value(
     existing_values: set[str],
     field: str,
     hass: HomeAssistant,
+    allow_new: bool = False,
 ) -> tuple[str | None, JsonObjectType | None]:
     """Normalize a mapped value and validate against existing inventory values."""
 
@@ -287,6 +295,10 @@ def _normalize_mapped_value(
     if matched is not None:
         return matched, None
 
+    if allow_new:
+        # User opted in to create new categories/locations by voice.
+        return canonical, None
+
     available_values = sorted(existing_values, key=str.lower)
     field_label = FIELD_LABELS[_language(hass)][field]
     return None, {
@@ -301,6 +313,133 @@ def _normalize_mapped_value(
             value=raw_value,
         ),
         "available": available_values,
+    }
+
+
+def _allow_new_categories_locations(options: dict[str, Any]) -> bool:
+    """Return whether new categories/locations may be created by voice."""
+
+    return bool(options.get("allow_new_categories_locations", False))
+
+
+def _item_search_names(item: dict[str, Any]) -> list[str]:
+    """Return all searchable names (name + aliases) for an item."""
+
+    names = [str(item.get("name", "")).strip()]
+    aliases = item.get("aliases", [])
+    if isinstance(aliases, str):
+        aliases = aliases.split(",")
+    if isinstance(aliases, list):
+        names.extend(str(alias).strip() for alias in aliases)
+    return [name for name in names if name]
+
+
+def _is_similar_name(query: str, candidate: str) -> bool:
+    """Return whether candidate is a fuzzy/partial match for query."""
+
+    query_lower = query.strip().lower()
+    candidate_lower = candidate.strip().lower()
+    if not query_lower or not candidate_lower:
+        return False
+
+    if query_lower in candidate_lower or candidate_lower in query_lower:
+        return True
+
+    return (
+        difflib.SequenceMatcher(None, query_lower, candidate_lower).ratio()
+        >= 0.6
+    )
+
+
+def _find_similar_items(
+    items: list[dict[str, Any]],
+    name: str,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    """Find items with a name/alias similar to the given name."""
+
+    candidates: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for item in items:
+        stored_name = str(item.get("name", "")).strip()
+        if not stored_name or stored_name.lower() in seen:
+            continue
+
+        if any(
+            _is_similar_name(name, candidate)
+            for candidate in _item_search_names(item)
+        ):
+            seen.add(stored_name.lower())
+            candidates.append(item)
+
+        if len(candidates) >= limit:
+            break
+
+    return candidates
+
+
+def _build_not_found_response(
+    hass: HomeAssistant,
+    items: list[dict[str, Any]],
+    name: str,
+    location: str | None = None,
+) -> JsonObjectType:
+    """Build a not-found response, suggesting similar items when possible."""
+
+    if location:
+        other_location_item = _find_inventory_item(items, name)
+        if other_location_item is not None:
+            actual_location = str(
+                other_location_item.get("location", "")
+            ).strip()
+            return {
+                "success": False,
+                "action": "confirmation_required",
+                "confirmation_required": True,
+                "candidates": [_format_item(other_location_item)],
+                "message": _message(
+                    hass,
+                    "item_found_other_location",
+                    name=name,
+                    candidate=other_location_item.get("name", name),
+                    location=actual_location,
+                ),
+            }
+
+    similar_items = _find_similar_items(items, name)
+    if similar_items:
+        candidate_names = [
+            str(item.get("name", "")) for item in similar_items
+        ]
+        if len(candidate_names) == 1:
+            message = _message(
+                hass,
+                "similar_item_found",
+                name=name,
+                candidate=candidate_names[0],
+            )
+        else:
+            message = _message(
+                hass,
+                "similar_items_found",
+                name=name,
+                candidates=", ".join(
+                    f"'{candidate}'" for candidate in candidate_names
+                ),
+            )
+        return {
+            "success": False,
+            "action": "confirmation_required",
+            "confirmation_required": True,
+            "candidates": [_format_item(item) for item in similar_items],
+            "message": message,
+        }
+
+    return {
+        "success": False,
+        "action": "not_found",
+        "message": _message(hass, "item_not_found", name=name),
     }
 
 
@@ -578,6 +717,8 @@ Return the missing fields so the assistant can ask the user.
 expiry_date must be ISO format YYYY-MM-DD.
 If the user gives only a month and year, use the first day of that month.
 
+If the item already exists in the inventory, its stored category and
+location are always used, ignoring any category/location passed here.
 Do not use this tool to modify an existing item. Use inventory_update_item
 for modifications.
 """
@@ -623,14 +764,27 @@ for modifications.
                 _message(hass, "no_inventory")
             )
 
-        args = tool_input.tool_args
+        args = dict(tool_input.tool_args)
         options = _entry_options(hass)
         required_options = _required_options(options)
 
-        required_fields = {
-            key: FIELD_LABELS[_language(hass)][key]
-            for key in DEFAULT_REQUIRED_OPTIONS
-        }
+        items = await _get_inventory_items(hass, inventory_id, llm_context)
+
+        existing_item = _find_inventory_item(items, args["name"])
+        if existing_item is not None:
+            # Adding to an already-known item: reuse its stored unit/expiry
+            # only when not supplied, but always keep its stored
+            # category/location, since changing them should go through
+            # inventory_update_item rather than being silently overridden here.
+            for key in ("unit", "expiry_date"):
+                if _is_missing_field(args, key) and not _is_missing_field(
+                    existing_item, key
+                ):
+                    args[key] = existing_item[key]
+
+            for key in ("category", "location"):
+                if not _is_missing_field(existing_item, key):
+                    args[key] = existing_item[key]
 
         required_by_options = {
             "quantity": required_options["require_quantity"],
@@ -638,6 +792,11 @@ for modifications.
             "category": required_options["require_category"],
             "location": required_options["require_location"],
             "expiry_date": required_options["require_expiry"],
+        }
+
+        required_fields = {
+            key: FIELD_LABELS[_language(hass)][key]
+            for key in required_by_options
         }
 
         missing = [
@@ -660,19 +819,6 @@ for modifications.
                 ),
             }
 
-        response = await hass.services.async_call(
-            INVENTORY_DOMAIN,
-            "get_items",
-            {
-                "inventory_id": inventory_id,
-            },
-            blocking=True,
-            return_response=True,
-            context=llm_context.context,
-        )
-
-        items = _extract_items(response)
-
         category_aliases = _parse_alias_config(
             str(options.get("categories", ""))
         )
@@ -682,6 +828,7 @@ for modifications.
 
         existing_categories = _collect_existing_values(items, "category")
         existing_locations = _collect_existing_values(items, "location")
+        allow_new = _allow_new_categories_locations(options)
 
         normalized_category = args.get("category")
         if isinstance(normalized_category, str):
@@ -691,6 +838,7 @@ for modifications.
                 existing_categories,
                 "category",
                 hass,
+                allow_new,
             )
             if category_error is not None:
                 return category_error
@@ -703,6 +851,7 @@ for modifications.
                 existing_locations,
                 "location",
                 hass,
+                allow_new,
             )
             if location_error is not None:
                 return location_error
@@ -858,6 +1007,7 @@ Never report success unless the resulting quantity is verified in inventory.
                 _collect_existing_values(items, "location"),
                 "location",
                 hass,
+                _allow_new_categories_locations(options),
             )
             if location_error is not None:
                 return location_error
@@ -869,13 +1019,9 @@ Never report success unless the resulting quantity is verified in inventory.
             location,
         )
         if item is None:
-            return {
-                "success": False,
-                "action": "not_found",
-                "message": _message(
-                    hass, "item_not_found", name=args["name"]
-                ),
-            }
+            return _build_not_found_response(
+                hass, items, args["name"], location
+            )
 
         success, error = await _set_item_quantity(
             hass,
@@ -951,13 +1097,9 @@ report success unless the resulting quantity is verified in inventory.
         items = await _get_inventory_items(hass, inventory_id, llm_context)
         item = _find_inventory_item(items, args["name"], args.get("location"))
         if item is None:
-            return {
-                "success": False,
-                "action": "not_found",
-                "message": _message(
-                    hass, "item_not_found", name=args["name"]
-                ),
-            }
+            return _build_not_found_response(
+                hass, items, args["name"], args.get("location")
+            )
 
         try:
             current_quantity = float(item.get("quantity"))
@@ -1061,6 +1203,7 @@ the resulting quantity is verified in inventory.
                 _collect_existing_values(items, "location"),
                 "location",
                 hass,
+                _allow_new_categories_locations(options),
             )
             if location_error is not None:
                 return location_error
@@ -1072,13 +1215,9 @@ the resulting quantity is verified in inventory.
             location,
         )
         if item is None:
-            return {
-                "success": False,
-                "action": "not_found",
-                "message": _message(
-                    hass, "item_not_found", name=args["name"]
-                ),
-            }
+            return _build_not_found_response(
+                hass, items, args["name"], location
+            )
 
         try:
             current_quantity = float(item.get("quantity"))
@@ -1173,11 +1312,7 @@ longer present after the service call.
 
         item = _find_inventory_item(items, item_name)
         if item is None:
-            return {
-                "success": False,
-                "action": "not_found",
-                "message": _message(hass, "item_not_found", name=item_name),
-            }
+            return _build_not_found_response(hass, items, item_name)
 
         stored_name = str(item.get("name", item_name))
         try:
@@ -1732,23 +1867,10 @@ Do not invent values.
 
         items = _extract_items(response)
 
-        matching_item: dict[str, Any] | None = None
-
-        for item in items:
-            item_name = str(
-                item.get("name", "")
-            )
-
-            if item_name.lower() == old_name.lower():
-                matching_item = item
-                break
+        matching_item = _find_inventory_item(items, old_name)
 
         if matching_item is None:
-            return {
-                "success": False,
-                "action": "not_found",
-                "message": _message(hass, "item_not_found", name=old_name),
-            }
+            return _build_not_found_response(hass, items, old_name)
 
         category_aliases = _parse_alias_config(
             str(options.get("categories", ""))
@@ -1759,6 +1881,7 @@ Do not invent values.
 
         existing_categories = _collect_existing_values(items, "category")
         existing_locations = _collect_existing_values(items, "location")
+        allow_new = _allow_new_categories_locations(options)
 
         normalized_category = args.get("category")
         if isinstance(normalized_category, str):
@@ -1768,6 +1891,7 @@ Do not invent values.
                 existing_categories,
                 "category",
                 hass,
+                allow_new,
             )
             if category_error is not None:
                 return category_error
@@ -1780,6 +1904,7 @@ Do not invent values.
                 existing_locations,
                 "location",
                 hass,
+                allow_new,
             )
             if location_error is not None:
                 return location_error
@@ -1983,6 +2108,14 @@ is an item location, never the inventory name.
 
 Never invent inventory information.
 
+If a single message contains multiple instructions or mentions multiple
+items (e.g. "rimuovi una birra e i cavoli", "setta a dopodomani la scadenza
+di A e B"), you must handle EVERY item/instruction mentioned, not just the
+first one. Call the appropriate tool separately once per item/instruction,
+one at a time, and wait for each tool result before moving to the next call.
+Do not stop after the first tool call and do not summarize the remaining
+items as done without actually calling the tool for each of them.
+
 For additions, collect all required information before calling
 inventory_add_item:
 - item
@@ -2009,7 +2142,16 @@ assuming what the user owns.
 
 Only confirm an operation when its tool returns success=true. If it returns
 success=false or an error, report the failure and do not claim that anything
-changed.
+changed. When a message covers multiple items, report the outcome of each
+item individually (some may succeed while others fail): never report an item
+as done unless its own tool call actually returned success=true.
+
+If a tool returns action="confirmation_required" with candidates, it means
+the exact item was not found but a similar item (e.g. a different name,
+alias, or location) was. Ask the user to confirm which item they meant using
+the suggestion in the message, and only retry the operation with the
+confirmed item name once the user agrees. Do not repeat a plain "not found"
+answer when candidates are present.
 
 After a successful tool call, give the user a short natural-language
 confirmation in Italian.

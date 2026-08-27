@@ -9,6 +9,41 @@ Simple Inventory Voice is a Home Assistant custom integration that adds LLM tool
 
 Both Simple Inventory Voice and its Simple Inventory dependency are Home Assistant custom integrations.
 
+## Pubblicazione su GitHub e installazione con HACS
+
+Il repository GitHub deve contenere questa struttura, con la cartella dell'integrazione direttamente dentro `custom_components`:
+
+```text
+simple-inventory-voice/
+  custom_components/
+    inventory_voice/
+      __init__.py
+      config_flow.py
+      llm.py
+      manifest.json
+      strings.json
+      brand/
+  hacs.json
+  README.md
+```
+
+Prima della pubblicazione:
+
+1. Crea un repository pubblico su GitHub, ad esempio `simple-inventory-voice`.
+2. Copia il contenuto di questa cartella locale in `custom_components/inventory_voice/`.
+3. Mantieni `manifest.json` con la versione `1.2` e crea una release GitHub con il tag `v1.2`.
+4. Verifica che `manifest.json`, `strings.json` e la cartella `brand/` siano inclusi nel commit.
+
+Per installarlo da HACS come repository personalizzato:
+
+1. Apri **HACS > Integrazioni** e seleziona il menu in alto a destra.
+2. Scegli **Repository personalizzati**.
+3. Inserisci l'URL del repository GitHub e seleziona la categoria **Integration**.
+4. Premi **Aggiungi**, cerca **Simple Inventory Voice** e installa la versione `1.2`.
+5. Riavvia Home Assistant, quindi configura l'integrazione da **Impostazioni > Dispositivi e servizi > Aggiungi integrazione**.
+
+Per una pubblicazione HACS definitiva, aggiungi il repository alla validazione HACS e conserva un tag GitHub per ogni nuova versione. Gli aggiornamenti saranno poi rilevati da HACS tramite i tag o le release.
+
 ## Installation
 
 1. Copy this folder to:
