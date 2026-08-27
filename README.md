@@ -37,9 +37,9 @@ Both repositories must be installed as custom integrations. Install the main Sim
 1. Open **HACS > Integrations** and select the three-dot menu.
 2. Choose **Custom repositories**.
 3. Add `https://github.com/blaineventurine/simple_inventory` and choose **Integration**.
-4. Install **Simple Inventory** and restart Home Assistant.
-5. Repeat the same steps for `https://github.com/wavelov3r/Simple-Inventory-Voice`.
-6. Install **Simple Inventory Voice**, restart Home Assistant, and add it from **Settings > Devices & services > Add integration**.
+4. Add  `https://github.com/wavelov3r/Simple-Inventory-Voice`. and choose **Integration**.
+5. Install **Simple Inventory** from **Settings > Devices & services > Add integration**.
+6. Install **Simple Inventory Voice**, (this repo) from **Settings > Devices & services > Add integration**. and restart Home Assistant.
 
 
 ### Option 2: Manual installation
