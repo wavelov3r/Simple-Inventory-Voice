@@ -1,4 +1,6 @@
-# Simple Inventory Voice
+
+
+# <img width="56" height="56" alt="image" src="https://github.com/user-attachments/assets/07561252-46a1-474f-a41a-910a388838bc" />  Simple Inventory Voice 
 
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-41BDF5?logo=home-assistant&logoColor=white)](https://www.home-assistant.io/)
 ![Custom integration](https://img.shields.io/badge/Home%20Assistant-Custom%20integration-41BDF5)
