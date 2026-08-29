@@ -1,7 +1,7 @@
 {
   "domain": "simple_inventory_voice",
   "name": "Simple Inventory Voice",
-  "version": "1.31",
+  "version": "1.32",
   "documentation": "https://github.com/wavelov3r/Simple-Inventory-Voice#readme",
   "issue_tracker": "https://github.com/wavelov3r/Simple-Inventory-Voice/issues",
   "requirements": [],
