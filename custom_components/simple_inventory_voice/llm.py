@@ -414,22 +414,14 @@ def _build_not_found_response(
         candidate_names = [
             str(item.get("name", "")) for item in similar_items
         ]
-        if len(candidate_names) == 1:
-            message = _message(
-                hass,
-                "similar_item_found",
-                name=name,
-                candidate=candidate_names[0],
-            )
-        else:
-            message = _message(
-                hass,
-                "similar_items_found",
-                name=name,
-                candidates=", ".join(
-                    f"'{candidate}'" for candidate in candidate_names
-                ),
-            )
+        message = _message(
+            hass,
+            "similar_items_found",
+            name=name,
+            candidates=", ".join(
+                f"'{candidate}'" for candidate in candidate_names
+            ),
+        )
         return {
             "success": False,
             "action": "confirmation_required",
@@ -443,6 +435,35 @@ def _build_not_found_response(
         "action": "not_found",
         "message": _message(hass, "item_not_found", name=name),
     }
+
+
+def _resolve_item(
+    hass: HomeAssistant,
+    items: list[dict[str, Any]],
+    name: str,
+    location: str | None = None,
+    location_aliases: dict[str, str] | None = None,
+) -> tuple[dict[str, Any] | None, JsonObjectType | None]:
+    """Resolve an item by exact name/alias, falling back to a single
+    unambiguous fuzzy match. Returns (item, error_response); exactly one of
+    the two is None. If more than one fuzzy match exists, an error response
+    asking the user to disambiguate is returned instead of guessing.
+    """
+
+    item = _find_inventory_item(items, name, location, location_aliases)
+    if item is not None:
+        return item, None
+
+    if location:
+        other_location_item = _find_inventory_item(items, name)
+        if other_location_item is not None:
+            return None, _build_not_found_response(hass, items, name, location)
+
+    similar_items = _find_similar_items(items, name)
+    if len(similar_items) == 1:
+        return similar_items[0], None
+
+    return None, _build_not_found_response(hass, items, name, location)
 
 
 def _inventory_id_from_context(
@@ -1044,16 +1065,15 @@ Never report success unless the resulting quantity is verified in inventory.
                 return location_error
             location = normalized_location
 
-        item = _find_inventory_item(
+        item, error_response = _resolve_item(
+            hass,
             items,
             args["name"],
             location,
             location_aliases,
         )
         if item is None:
-            return _build_not_found_response(
-                hass, items, args["name"], location
-            )
+            return error_response
 
         success, error = await _set_item_quantity(
             hass,
@@ -1146,16 +1166,15 @@ report success unless the resulting quantity is verified in inventory.
                 return location_error
             location = normalized_location
 
-        item = _find_inventory_item(
+        item, error_response = _resolve_item(
+            hass,
             items,
             args["name"],
             location,
             location_aliases,
         )
         if item is None:
-            return _build_not_found_response(
-                hass, items, args["name"], location
-            )
+            return error_response
 
         try:
             current_quantity = float(item.get("quantity"))
@@ -1274,16 +1293,15 @@ resulting quantity is verified in inventory.
                 return location_error
             location = normalized_location
 
-        item = _find_inventory_item(
+        item, error_response = _resolve_item(
+            hass,
             items,
             args["name"],
             location,
             location_aliases,
         )
         if item is None:
-            return _build_not_found_response(
-                hass, items, args["name"], location
-            )
+            return error_response
 
         try:
             current_quantity = float(item.get("quantity"))
@@ -1396,9 +1414,9 @@ call.
                 "message": _message(hass, "read_failed", error=err),
             }
 
-        item = _find_inventory_item(items, item_name)
+        item, error_response = _resolve_item(hass, items, item_name)
         if item is None:
-            return _build_not_found_response(hass, items, item_name)
+            return error_response
 
         stored_name = str(item.get("name", item_name))
 
@@ -1965,10 +1983,10 @@ Do not invent values.
 
         items = _extract_items(response)
 
-        matching_item = _find_inventory_item(items, old_name)
+        matching_item, error_response = _resolve_item(hass, items, old_name)
 
         if matching_item is None:
-            return _build_not_found_response(hass, items, old_name)
+            return error_response
 
         category_aliases = _parse_alias_config(
             str(options.get("categories", ""))
