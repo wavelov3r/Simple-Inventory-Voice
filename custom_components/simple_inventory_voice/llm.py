@@ -730,6 +730,7 @@ class InventoryAddItemTool(llm.Tool):
     """Add an item to Simple Inventory."""
 
     name = "inventory_add_item"
+    integration = DOMAIN
 
     description = """
 Add a new item to the user's Simple Inventory.
@@ -998,6 +999,7 @@ class InventorySetQuantityTool(llm.Tool):
     """Set an existing inventory item's quantity."""
 
     name = "inventory_set_quantity"
+    integration = DOMAIN
 
     description = """
 Set the exact quantity of an existing inventory item.
@@ -1105,6 +1107,7 @@ class InventoryIncrementQuantityTool(llm.Tool):
     """Increase an existing inventory item's quantity."""
 
     name = "inventory_increment_quantity"
+    integration = DOMAIN
 
     description = """
 Increase the quantity of an existing inventory item.
@@ -1219,6 +1222,7 @@ class InventoryRemoveQuantityTool(llm.Tool):
     """Remove a quantity from an existing inventory item."""
 
     name = "inventory_remove_quantity"
+    integration = DOMAIN
 
     description = """
 Remove a quantity from an existing inventory item, e.g. when the user says
@@ -1359,6 +1363,7 @@ class InventoryDeleteItemTool(llm.Tool):
     """Delete an item from Simple Inventory."""
 
     name = "inventory_delete_item"
+    integration = DOMAIN
 
     description = """
 Permanently remove an item, including its history, from the configured
@@ -1468,6 +1473,7 @@ class InventoryLookupBarcodeTool(llm.Tool):
     """Look up a barcode across all Simple Inventory inventories."""
 
     name = "inventory_lookup_barcode"
+    integration = DOMAIN
 
     description = """Find items by barcode across all Simple Inventory inventories."""
 
@@ -1521,6 +1527,7 @@ class InventoryScanBarcodeTool(llm.Tool):
     """Act on an item identified by barcode."""
 
     name = "inventory_scan_barcode"
+    integration = DOMAIN
 
     description = """
 Scan a barcode to increment, decrement, or look up an item. The inventory ID
@@ -1591,6 +1598,7 @@ class InventoryConsumptionRatesTool(llm.Tool):
     """Retrieve consumption analytics for an inventory item."""
 
     name = "inventory_get_consumption_rates"
+    integration = DOMAIN
 
     description = """
 Get consumption and spending analytics for an item, including daily and weekly
@@ -1656,6 +1664,7 @@ class InventoryFindAllItemsTool(llm.Tool):
     """Retrieve Simple Inventory items across all inventories."""
 
     name = "inventory_find_all_items"
+    integration = DOMAIN
 
     description = """
 Retrieve inventory items from every Simple Inventory inventory.
@@ -1722,6 +1731,7 @@ class InventoryFindItemsTool(llm.Tool):
     """Find items in Simple Inventory."""
 
     name = "inventory_find_items"
+    integration = DOMAIN
 
     description = """
 Search the user's Simple Inventory.
@@ -1871,6 +1881,7 @@ class InventoryUpdateItemTool(llm.Tool):
     """Update an existing inventory item."""
 
     name = "inventory_update_item"
+    integration = DOMAIN
 
     description = """
 Update an existing item in Simple Inventory.
