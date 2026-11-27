@@ -729,7 +729,7 @@ def _format_item(item: dict[str, Any]) -> dict[str, Any]:
 class InventoryAddItemTool(llm.Tool):
     """Add an item to Simple Inventory."""
 
-    name = "inventory_add_item"
+    name = "simple_inventory_voice__inventory_add_item"
     integration = DOMAIN
 
     description = """
@@ -768,7 +768,7 @@ If the user gives only a month and year, use the first day of that month.
 
 If the item already exists in the inventory, its stored category and
 location are always used, ignoring any category/location passed here.
-Do not use this tool to modify an existing item. Use inventory_update_item
+Do not use this tool to modify an existing item. Use simple_inventory_voice__inventory_update_item
 for modifications.
 """
 
@@ -824,7 +824,7 @@ for modifications.
             # Adding to an already-known item: reuse its stored unit/expiry
             # only when not supplied, but always keep its stored
             # category/location, since changing them should go through
-            # inventory_update_item rather than being silently overridden here.
+            # simple_inventory_voice__inventory_update_item rather than being silently overridden here.
             for key in ("unit", "expiry_date"):
                 if _is_missing_field(args, key) and not _is_missing_field(
                     existing_item, key
@@ -998,7 +998,7 @@ for modifications.
 class InventorySetQuantityTool(llm.Tool):
     """Set an existing inventory item's quantity."""
 
-    name = "inventory_set_quantity"
+    name = "simple_inventory_voice__inventory_set_quantity"
     integration = DOMAIN
 
     description = """
@@ -1106,7 +1106,7 @@ Never report success unless the resulting quantity is verified in inventory.
 class InventoryIncrementQuantityTool(llm.Tool):
     """Increase an existing inventory item's quantity."""
 
-    name = "inventory_increment_quantity"
+    name = "simple_inventory_voice__inventory_increment_quantity"
     integration = DOMAIN
 
     description = """
@@ -1221,7 +1221,7 @@ report success unless the resulting quantity is verified in inventory.
 class InventoryRemoveQuantityTool(llm.Tool):
     """Remove a quantity from an existing inventory item."""
 
-    name = "inventory_remove_quantity"
+    name = "simple_inventory_voice__inventory_remove_quantity"
     integration = DOMAIN
 
     description = """
@@ -1234,7 +1234,7 @@ only used to distinguish items with the same name in different locations.
 Do not remove more than the current quantity. It is normal and expected for
 the resulting quantity to reach 0 (item fully consumed): this tool never
 deletes the item or its history, it only sets the quantity to 0. Do not use
-inventory_delete_item for this case. Never report success unless the
+simple_inventory_voice__inventory_delete_item for this case. Never report success unless the
 resulting quantity is verified in inventory.
 """
 
@@ -1362,7 +1362,7 @@ resulting quantity is verified in inventory.
 class InventoryDeleteItemTool(llm.Tool):
     """Delete an item from Simple Inventory."""
 
-    name = "inventory_delete_item"
+    name = "simple_inventory_voice__inventory_delete_item"
     integration = DOMAIN
 
     description = """
@@ -1373,7 +1373,7 @@ Only use this when the user explicitly asks to delete/erase the item from
 the database (e.g. "elimina dal database", "cancella dal database", "delete
 it from the database"). Running out of stock, consuming the last unit, or
 the quantity reaching zero is NEVER a reason to call this tool: use
-inventory_remove_quantity for that instead, which keeps the item (with its
+simple_inventory_voice__inventory_remove_quantity for that instead, which keeps the item (with its
 history) at quantity 0.
 
 Confirmation flow: call this tool without confirm=true first. It responds
@@ -1472,7 +1472,7 @@ call.
 class InventoryLookupBarcodeTool(llm.Tool):
     """Look up a barcode across all Simple Inventory inventories."""
 
-    name = "inventory_lookup_barcode"
+    name = "simple_inventory_voice__inventory_lookup_barcode"
     integration = DOMAIN
 
     description = """Find items by barcode across all Simple Inventory inventories."""
@@ -1526,7 +1526,7 @@ class InventoryLookupBarcodeTool(llm.Tool):
 class InventoryScanBarcodeTool(llm.Tool):
     """Act on an item identified by barcode."""
 
-    name = "inventory_scan_barcode"
+    name = "simple_inventory_voice__inventory_scan_barcode"
     integration = DOMAIN
 
     description = """
@@ -1597,7 +1597,7 @@ is optional; omit it to let Simple Inventory resolve an unambiguous barcode.
 class InventoryConsumptionRatesTool(llm.Tool):
     """Retrieve consumption analytics for an inventory item."""
 
-    name = "inventory_get_consumption_rates"
+    name = "simple_inventory_voice__inventory_get_consumption_rates"
     integration = DOMAIN
 
     description = """
@@ -1663,14 +1663,14 @@ usage, estimated days until depletion, restock interval, and spending rates.
 class InventoryFindAllItemsTool(llm.Tool):
     """Retrieve Simple Inventory items across all inventories."""
 
-    name = "inventory_find_all_items"
+    name = "simple_inventory_voice__inventory_find_all_items"
     integration = DOMAIN
 
     description = """
 Retrieve inventory items from every Simple Inventory inventory.
 
 Use this only when the user explicitly asks about all inventories. Use
-inventory_find_items for the configured inventory.
+simple_inventory_voice__inventory_find_items for the configured inventory.
 """
 
     parameters = vol.Schema({})
@@ -1730,7 +1730,7 @@ inventory_find_items for the configured inventory.
 class InventoryFindItemsTool(llm.Tool):
     """Find items in Simple Inventory."""
 
-    name = "inventory_find_items"
+    name = "simple_inventory_voice__inventory_find_items"
     integration = DOMAIN
 
     description = """
@@ -1880,7 +1880,7 @@ Return the matching inventory items.
 class InventoryUpdateItemTool(llm.Tool):
     """Update an existing inventory item."""
 
-    name = "inventory_update_item"
+    name = "simple_inventory_voice__inventory_update_item"
     integration = DOMAIN
 
     description = """
@@ -1913,10 +1913,10 @@ If the user asks to update the expiration date but does NOT provide the
 new expiration date, DO NOT modify anything.
 
 Instead:
-1. Find the item first with inventory_find_items.
+1. Find the item first with simple_inventory_voice__inventory_find_items.
 2. Tell the user its CURRENT expiration date.
 3. Ask what the NEW expiration date should be.
-4. Only call inventory_update_item after the user gives the new date.
+4. Only call simple_inventory_voice__inventory_update_item after the user gives the new date.
 
 If the user explicitly provides the new expiration date in the same request,
 you may update it immediately.
@@ -2224,25 +2224,25 @@ adding something, updating something, quantities, prices, categories,
 locations, expiration dates, expiry alerts, barcodes, shopping-list settings,
 consumption analytics, hardware, filaments, food, or cleaning products.
 
-For restocking use inventory_increment_quantity; for consuming a quantity use
-inventory_remove_quantity; for setting an exact quantity use
-inventory_set_quantity. To delete an entire item use inventory_delete_item.
-For barcode actions use inventory_lookup_barcode or inventory_scan_barcode.
-Use inventory_get_consumption_rates for consumption or spending questions.
+For restocking use simple_inventory_voice__inventory_increment_quantity; for consuming a quantity use
+simple_inventory_voice__inventory_remove_quantity; for setting an exact quantity use
+simple_inventory_voice__inventory_set_quantity. To delete an entire item use simple_inventory_voice__inventory_delete_item.
+For barcode actions use simple_inventory_voice__inventory_lookup_barcode or simple_inventory_voice__inventory_scan_barcode.
+Use simple_inventory_voice__inventory_get_consumption_rates for consumption or spending questions.
 The configured inventory ID is used automatically except for barcode lookups
 and requests explicitly about all inventories. A location such as "dispensa"
 is an item location, never the inventory name.
 
 When the user says they consumed, used, finished, or ran out of something
 ("ho consumato", "ho finito", "è finito"), always use
-inventory_remove_quantity (or inventory_set_quantity to set it to 0). It is
-normal for the quantity to reach 0; never call inventory_delete_item in this
+simple_inventory_voice__inventory_remove_quantity (or simple_inventory_voice__inventory_set_quantity to set it to 0). It is
+normal for the quantity to reach 0; never call simple_inventory_voice__inventory_delete_item in this
 case, since that would permanently erase the item and its whole history.
 
-Only call inventory_delete_item when the user explicitly asks to delete or
+Only call simple_inventory_voice__inventory_delete_item when the user explicitly asks to delete or
 erase the item from the database (e.g. "elimina dal database", "cancella dal
 database", "elimina [l'oggetto] dal database"), never just because it ran
-out. inventory_delete_item requires two steps: call it once to get a
+out. simple_inventory_voice__inventory_delete_item requires two steps: call it once to get a
 confirmation message, read that message to the user, and only call it again
 with confirm=true after the user has explicitly confirmed the deletion.
 Never set confirm=true on the first call or without an explicit user
@@ -2259,7 +2259,7 @@ Do not stop after the first tool call and do not summarize the remaining
 items as done without actually calling the tool for each of them.
 
 For additions, collect all required information before calling
-inventory_add_item:
+simple_inventory_voice__inventory_add_item:
 - item
 - quantity
 - unit
@@ -2274,12 +2274,12 @@ expiration date when the user has not specified the new date. In that case,
 tell the user the current expiration date and ask for the new one.
 
 When the user asks for an expiry reminder or alert a number of days before an
-item expires, call inventory_update_item with expiry_alert_days set to that
+item expires, call simple_inventory_voice__inventory_update_item with expiry_alert_days set to that
 number. Examples: "avvisami 4 giorni prima che scade" and "alert me 4 days
 before it expires" both require expiry_alert_days=4. Do not say that expiry
 alerts are unsupported.
 
-When searching inventory, actually call inventory_find_items rather than
+When searching inventory, actually call simple_inventory_voice__inventory_find_items rather than
 assuming what the user owns.
 
 Only confirm an operation when its tool returns success=true. If it returns
